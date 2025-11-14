@@ -134,19 +134,6 @@ This memory exists primarily for Claude’s benefit: issues it encountered, arch
 
 ---
 
-## Demo Project
-
-A full demo project using Meridian is included in this repo.
-Real examples of what Meridian generates (and what Claude uses to re-enter the project with full context):
-
-* [demo/.meridian/tasks/TASK-001/TASK-001.yaml](demo/.meridian/tasks/TASK-001/TASK-001.yaml) — task brief
-* [demo/.meridian/tasks/TASK-001/TASK-001-plan.md](demo/.meridian/tasks/TASK-001/TASK-001-plan.md) — approved plan
-* [demo/.meridian/tasks/TASK-001/TASK-001-context.md](demo/.meridian/tasks/TASK-001/TASK-001-context.md) — context notes
-* [demo/.meridian/memory.jsonl](demo/.meridian/memory.jsonl) — memory entries
-* **Demo app:** https://meridian-orcin.vercel.app/
-
----
-
 ## Project types (what they mean)
 
 Set in `.meridian/config.yaml`:
