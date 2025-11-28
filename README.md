@@ -1,13 +1,15 @@
 ![Logo](https://github.com/user-attachments/assets/9eb140c8-b938-4e77-ab94-0461a6d919fd)
-# **Meridian** — a zero‑config Claude Code setup for Tasks, Memory & Guardrails
+# **Meridian**: zero‑config Claude Code setup for Tasks, Memory & Guardrails
 
-Make Claude Code **predictable**: preserved context, enforced rules, in‑repo tasks, optional TDD—without changing how you talk to Claude.
+Meridian keeps Claude Code predictable without changing how you talk to it. You still chat normally while it preserves context, enforces rules, writes tasks, and supports optional TDD.
 
 * **Zero‑config install**: copy two folders, make scripts executable, and go.
 * **Deterministic behavior**: hooks *enforce* the right steps (not just suggest them).
 * **Persistent context**: tasks, memory, and docs live in your repo.
 * **Plug‑in rules**: baseline `CODE_GUIDE.md` + project‑type add‑ons + optional **TDD** override.
 * **Zero behavior change**: no commands, no scripts, no special phrasing. You talk to Claude normally; Meridian handles everything behind the scenes.
+
+**Current version:** `0.0.2` (updated 2025‑11‑20). See [CHANGELOG.md](CHANGELOG.md) for details.
 
 > If this setup helps, please ⭐ star the repo and share it.
 > Follow updates: [X (Twitter)](http://x.com/markmdev) • [LinkedIn](http://linkedin.com/in/markmdev)
@@ -16,17 +18,17 @@ Make Claude Code **predictable**: preserved context, enforced rules, in‑repo t
 
 ## Why this setup exists
 
-Default Claude Code often loses context after compaction, forgets history, and drifts from standards. Claude is customizable—**hooks** and **skills** let you shape behavior—but you need a structure that **can’t be skipped**.
+Default Claude Code often loses context after compaction, forgets history, and drifts from standards. Claude is customizable: **hooks** and **skills** let you shape behavior, but you need a structure that **can’t be skipped**.
 
 **Meridian** adds lightweight guardrails so Claude:
 
 * **Documents tasks** (brief, approved plan, context) in your repo.
-* **Follows guides** (baseline + add‑ons) every session—re‑injected by hooks.
-* **Reads relevant docs** you list—every startup/reload.
+* **Follows guides** (baseline + add‑ons) every session, re-injected by hooks.
+* **Reads relevant docs** you list on every startup or reload.
 * **Curates memory** of durable decisions (append‑only `memory.jsonl`).
 * **Never loses context after compaction**: hooks reinject the essential docs, standards, and the task Claude was working on so it always returns with full context.
 
-You keep chatting normally; **Claude** does the rest.
+You keep chatting normally; Claude does the rest.
 
 ---
 
@@ -37,7 +39,7 @@ You keep chatting normally; **Claude** does the rest.
 * No subagent orchestration to maintain.
 
 Just copy two folders, make scripts executable, and continue working with Claude as usual.
-No workflow changes for the developer — no slash commands, no scripts, no special instructions. You interact with Claude exactly as you already do.
+No workflow changes for the developer: no slash commands, no scripts, no special instructions. You interact with Claude exactly as you already do.
 
 ---
 
@@ -67,7 +69,7 @@ Hooks inject the system prompt, guides, tasks, memory, and docs—and **Claude**
 ## Talk in **Plan mode** (important)
 
 **Describe work in Plan mode** so Claude proposes a plan you can approve.
-When you approve the plan, a hook **forces Claude** to create a task (`TASK-###` folder with brief/plan/context) and update the backlog—**every time**.
+When you approve the plan, a hook forces Claude to create a task (`TASK-###` folder with brief/plan/context) and update the backlog every single time.
 
 Why Plan mode?
 
@@ -99,25 +101,17 @@ The core system prompt that sets behavior and guardrails.
 
 Each task lives in `.meridian/tasks/TASK-###/`:
 
-* `TASK-###.yaml` — brief (objective, scope, constraints, acceptance criteria, deliverables, risks, links)
-* `TASK-###-plan.md` — the **approved plan** (amendments tracked)
-* `TASK-###-context.md` — timestamped notes (decisions, blockers, PR links; `MEMORY:` markers)
+* `TASK-###.yaml`: brief (objective, scope, constraints, acceptance criteria, deliverables, risks, links)
+* `TASK-###-plan.md`: the approved plan (amendments tracked)
+* `TASK-###-context.md`: timestamped notes (decisions, blockers, PR links; `MEMORY:` markers)
 
 Backlog: `.meridian/task-backlog.yaml` tracks status (`todo`, `in_progress`, `blocked`, `done`).
 
-These task folders aren’t just for the developer — Claude actively uses them to restore context after startup or compaction.
+These task folders aren’t just for the developer; Claude actively uses them to restore context after startup or compaction.
 
 ### Relevant docs
 
-List any must‑read docs in `.meridian/relevant-docs.md`. Claude loads them on startup/reload.
-
-**Example:**
-
-```md
-Always read these files before continuing your work:
-- `.meridian/docs/langgraph.md`
-- `backend/feature/email/subscriptions.md`
-```
+Document required readings in `.meridian/relevant-docs.md` by **context** instead of one giant list. Each section follows the pattern “When working on `<area>`, read `<files>`.” Hooks remind Claude to open only the sections tied to the work it is currently doing, so it isn’t forced to re-read unrelated docs on every startup.
 
 ### Memory (append‑only)
 
@@ -143,10 +137,9 @@ project_type: standard   # hackathon | standard | production
 tdd_mode: false          # true enables TDD add-on and overrides testing rules
 ```
 
-* **hackathon** — a *loosened* mode for simpler projects and fast iteration.
-  Use it whenever you don’t need production‑level code quality.
-* **standard** — the baseline defaults; balanced for most work.
-* **production** — a *stricter* mode for production‑grade needs: security, reliability, perf.
+* **hackathon**: a loosened mode for simpler projects and fast iteration. Use it whenever you don’t need production-grade quality.
+* **standard**: the baseline defaults, balanced for most work.
+* **production**: a stricter mode for production-grade needs (security, reliability, performance).
 
 **TDD (`tdd_mode: true`)**: Tests are written **first** for each behavior slice; this **overrides** any testing guidance from hackathon/production/baseline.
 
@@ -184,6 +177,9 @@ tdd_mode: false          # true enables TDD add-on and overrides testing rules
 * **`claude-init.py`** — on session start
   Injects the manual, baseline guide, the selected project-type add-on, TDD (if enabled), memory, backlog, relevant docs, and the active task context. This ensures Claude always starts with the correct context. Sets a “must review” flag.
   
+* **`startup-prune-completed-tasks.py`** — on startup/clear
+  Keeps only the 10 most recent completed tasks in `task-backlog.yaml`, moves older `done/completed` entries into `task-backlog-archive.yaml`, and relocates their folders under `.meridian/tasks/archive/`.
+  
 * **`session-reload.py` + `prompts/session-reload.md`** — on compaction/resume
   Re-injects all essential context Claude needs after compaction (guidelines, memory, docs, active task). Ensures Claude cannot “come back empty.” Asks Claude to sync task notes before continuing. Sets the “must review” flag again.
   
@@ -196,6 +192,9 @@ tdd_mode: false          # true enables TDD add-on and overrides testing rules
 * **`pre-stop-update.py`** — on stop
   Blocks until Claude updates task files/backlog/memory and verifies tests/lint/build (or states “nothing to update”).
 
+* **`permission-auto-approver.py`** — on `PermissionRequest`
+  Auto-allows whitelisted Meridian actions (task-manager, memory-curator, backlog updates, etc.) so low-risk tools run without interruptions.
+
 These guardrails turn guidance into **deterministic behavior**.
 
 ---
@@ -207,8 +206,8 @@ These guardrails turn guidance into **deterministic behavior**.
   Skill doc `SKILL.md` defines when to create tasks, status transitions, and templates.
 
 * **memory‑curator**
-  Script `add_memory_entry.py` appends a JSON line (auto id + UTC timestamp).
-  Skill doc `SKILL.md` defines the concise summary format and tag taxonomy.
+  Scripts `add_memory_entry.py`, `edit_memory_entry.py`, and `delete_memory_entry.py` handle append/update/delete flows for `.meridian/memory.jsonl` (never edit manually).
+  Skill doc `SKILL.md` explains when to capture memories, the summary/tag format, and how to run the helper scripts.
 
 ---
 

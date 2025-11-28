@@ -6,121 +6,66 @@ description: Create and manage development tasks after the user approves a plan.
 # Task Manager Skill
 
 ## When to Use
-Use this skill **immediately after the user approves a plan** for code changes. It creates the task folder, scaffolds files, records the plan and context, and updates the backlog.
-
-> Do **not** use for brainstorming or unapproved ideas.
+Immediately after a plan is approved. The script scaffolds the task folder, locks the plan, and registers the work in the backlog. Skip this skill for speculative ideas or unapproved work.
 
 ---
 
-## Task Structure (authoritative)
-Each task lives at:  
-`.meridian/tasks/TASK-###/`
+## Workflow
+Stay concise. Record only the facts another engineer needs; skip filler or repetition. Avoid verbosity.
 
-**Files inside (exact names):**
-- `TASK-###.yaml` — Task brief (objective, scope, constraints, acceptance criteria, deliverables, risks, out of scope, links)
-- `TASK-###-plan.md` — **Exact plan approved by the user** (freeze this; changes require re‑approval)
-- `TASK-###-context.md` — Relevant context (Why decisions were made), key files, timestamped progress notes (log decisions, blockers, links, PRs)
-
-> **IDs**: 3‑digit, zero‑padded, uppercase folder prefix: `TASK-001`, `TASK-002`, …
-
----
-
-## Preconditions
-1) The user has explicitly approved the plan (or you have an approved summary of the plan).  
-2) You know the short, action‑oriented title (≤80 chars).  
-3) No secrets or PII are copied into task files.
-
----
-
-## Creating a Task
-
-### Step 1 — Create the folder and files
-Run the helper script:
-- `python3 $CLAUDE_PROJECT_DIR/.claude/skills/task-manager/scripts/create-task.py`
-  - It will automatically create a new folder for a task with 3 files:
-    - `$CLAUDE_PROJECT_DIR/.meridian/tasks/TASK-###/TASK-###.yaml`
-    - `$CLAUDE_PROJECT_DIR/.meridian/tasks/TASK-###/TASK-###-plan.md`
-    - `$CLAUDE_PROJECT_DIR/.meridian/tasks/TASK-###/TASK-###-context.md`
-
-### Step 2 — Populate files
-- Read each file before writing (System limitation)
-- Fill `TASK-###.yaml` using the **Task Brief YAML Template**.
-- Paste the approved plan into `TASK-###-plan.md`
-- Add an initial entry to `TASK-###-context.md`
-
-### Step 3 — Update the backlog
-Append/update an entry in `.meridian/task-backlog.yaml` with:
-- `id`, `title`, `status: todo`, `priority`, and the relative path to the task folder.
-
----
-
-### `task-backlog.yaml` — quick guide
-
-* **Purpose:** Single source of truth for all tasks (status, priority, location).
-* **Structure:** Top‑level key `tasks:`, each item is one task entry.
-* **When to add:** Immediately after creating `TASK-###`; set `status: todo`.
-* **When to update:** On start (`in_progress`), when blocked (`blocked` + reason in the task’s context file), and on completion (`done`).
-* **What to edit:** `status`, `priority`
-* **Never:** Rename `id`, delete finished tasks (mark `done` instead).
-* **Allowed values:**
-
-  * `status`: `todo` | `in_progress` | `blocked` | `done`
-  * `priority`: `P0` | `P1` | `P2` | `P3` (P0 = highest)
-* **Consistency:** `id` must match the folder name and the files inside it.
-
-#### Example entry (recommended)
-
-```yaml
-tasks:
-  - id: TASK-037
-    title: "Add cursor-based pagination to /api/orders"
-    priority: P1
-    status: in_progress
-    path: ".meridian/tasks/TASK-037/"
+### Create the task
+```bash
+python3 $CLAUDE_PROJECT_DIR/.claude/skills/task-manager/scripts/create-task.py
 ```
+The helper creates `.meridian/tasks/TASK-###/` with three files:
+- `TASK-###.yaml` — brief (objective, scope, acceptance, risks, links)
+- `TASK-###-plan.md` — exact approved plan (changes need re-approval)
+- `TASK-###-context.md` — running log of decisions, links, blockers
+
+IDs are zero-padded (`TASK-001`). Read each file before editing (System limitation, you cannot edit the files before you read them).
+
+### Populate files
+- Complete the YAML template in `TASK-###.yaml`
+- Paste the approved plan into `TASK-###-plan.md`
+- Add an initial context entry with date, summary, and first steps in `TASK-###-context.md`
+
+### Register in the backlog
+Add an item to `.meridian/task-backlog.yaml`:
+- `id`, `title`, `status: todo`, `priority`, `path: ".meridian/tasks/TASK-###/"`
+Only edit `status` and `priority` later; never rename IDs or delete entries.
+
+Allowed values:
+- `status`: `todo | in_progress | blocked | done`
+- `priority`: `P0 | P1 | P2 | P3`
 
 ---
 
 ## During Execution
-
-**Status transitions**  
-- `todo` → `in_progress` when you start coding.  
-- Optional: `blocked` when waiting on dependency/decision; record reason in context.  
-- `in_progress` → `done` when the Definition of Done is met.
-
-**What to update**
-1) `TASK-###-context.md`: Add timestamped notes for:
-   - Decisions, tradeoffs, key files, and blocked reasons.
-   - Links to PR(s), commit SHAs, builds, or dashboards.
-   - “Memory candidates” (facts worth persisting) — flag with `MEMORY:`; **then use `memory-curator`** (never write memory.jsonl manually).
-2) `$CLAUDE_PROJECT_DIR/.meridian/task-backlog.yaml`:
-   - Update `status`.
-3) `TASK-###.yaml`:
+- Switch backlog status to `in_progress` when coding starts; use `blocked` with a note in context if waiting.
+- Update `TASK-###-context.md` with timestamped notes for decisions, tradeoffs, blockers, and “MEMORY:” candidates (then call `memory-curator`).
+- Keep `TASK-###.yaml` accurate if scope, risks, or acceptance criteria shift (with approval).
+- Use `memory-curator` for durable facts (architecture shifts, lessons learned, traps to avoid later). Never edit `.meridian/memory.jsonl` manually.
 
 ---
 
-## Finishing a Task (Definition of Done)
-Mark `done` only when **all** are true:
-- Code compiles; typecheck/lint/test/build pass.
-- Tests added/updated for new behavior; critical flows covered.
-- Docs updated where relevant (README/snippets/endpoint contracts).
-- No secrets/PII in code, commits, or logs. UI/API changes meet accessibility/security checks.
-- If schema/data changed: migration applied and rollback plan documented in the plan or context.
-- `TASK-###-context.md` has a final note with the merged PR link(s).
-- Run `memory-curator` to add any durable architectural decisions (don’t edit memory manually).
-- Update `.meridian/task-backlog.yaml` to `done`.
+## Finishing
+Mark `done` only when all conditions hold:
+- Code builds, lint/tests pass, migrations applied.
+- Docs updated (README, API refs, etc.) if behavior changed.
+- Backlog entry set to `done`.
+- Durable insights recorded via `memory-curator`.
 
 ---
 
-## Editing Scope or Plan
-- **Any material change** to goals, acceptance criteria, or approach requires re‑approval.
-- Update `TASK-###-plan.md` with a short “Amendment <date>” section describing the change.
-- Log the reason and reference in `TASK-###-context.md`.
+## Plan or Scope Changes
+- Re-seek approval for any material change.
+- In `TASK-###-plan.md`, add `Amendment YYYY-MM-DD` with the new plan.
+- Log rationale + links in `TASK-###-context.md`.
 
 ---
 
-## Splitting / Merging / Cancelling Tasks
-- **Split**: Create new tasks, move relevant sections, and update backlog. In originals, add: “Superseded by: …”.
-- **Merge**: Keep one task as primary; close the others as `done` with “Merged into: …” notes.
-- **Cancel**: Set status to `done` with `resolution: canceled`; explain in context; keep history.
+## Split / Merge / Cancel
+- **Split**: create new TASK IDs, move sections, add “Superseded by …” note in originals.
+- **Merge**: keep a primary task; mark others `done` with “Merged into …”.
+- **Cancel**: mark `done` with `resolution: canceled`; context must explain why.
 </task_manager>

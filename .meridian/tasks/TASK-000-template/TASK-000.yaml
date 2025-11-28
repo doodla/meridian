@@ -35,8 +35,6 @@ deliverables:
   - Docs: README snippets, endpoint docs, migration notes
 
 implementation_notes:
-  - "CRITICAL: Follow conventions.md for code quality"
-  - "CRITICAL: Follow project-patterns.md for architectural patterns"
   - "Reference: See similar implementation in path/to/file.ts"
   - Consider security implications (auth, validation, etc.)
   - Performance considerations if applicable

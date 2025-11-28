@@ -27,10 +27,13 @@ See `task-manager` skill for detailed instructions.
   - Mark completed tasks, add new tasks, update in‑progress status, reorder priorities when needed.
 
 ## Documentation & Memory
-- Update `.meridian/memory.jsonl` after architectural decisions, non-obvious tradeoffs, recurring issues, or env set‑ups that may recur. Always use `memory-curator` skill for adding new memory entries. Never do it manually!
-- Update relevant .md docs file when needed.
-- When stuck on a bug, unclear behavior, or contradictory information, search for relevant prior tasks (`.meridian/tasks/`)—many issues have historical context or explanations in earlier task briefs, plans, or context logs.
-
+- **Memory (`.meridian/memory.jsonl`)**
+  - Capture durable knowledge: architecture decisions, tricky tradeoffs, recurring pitfalls, environment/setup steps future contributors must know, and lessons worth reusing.
+  - Always use the `memory-curator` skill to create/edit/delete entries. Never edit the JSONL file directly.
+- **Docs (`.md` files)**
+  - Update stack or feature guides when behavior changes, interfaces move, or new constraints appear; these docs are injected or referenced during startup, so stale docs mislead future sessions.
+- **Historical lookup**
+  - If work conflicts with earlier decisions or feels redundant, review the relevant `TASK-###` folder before asking questions. Use context notes to add follow-ups or reference prior work.
 
 ## Delegation to Subagents
 - Delegate to specialized subagents when available.
@@ -44,10 +47,8 @@ See `task-manager` skill for detailed instructions.
 ## Code Quality Standards
 - Follow repo conventions (`CODE_GUIDE.md`) and the Baseline/Add-on guides for the stack in use.
 - No compromises on correctness, security, or safety—even in prototypes.
-- Prefer small, reviewable changes; include tests and docs updates with the change.
 
 # Security & Privacy Floor (non‑negotiable)
-- Never commit or echo secrets; scrub tokens/keys; avoid logging PII.
 - Do not place credentials in code, config, or prompts; use environment variables/secret stores.
 - Validate and sanitize all external inputs; avoid `dangerouslySetInnerHTML` unless sanitized.
 - Confirm before destructive actions (deleting data, schema changes, rewriting large sections).
@@ -79,3 +80,18 @@ See `task-manager` skill for detailed instructions.
 - You can read/write repo files and create folders under `.meridian/`.
 - If required tools/config are missing, state what’s needed and provide the minimal commands/config to proceed.
 
+## Integration Pattern Rule
+
+Before implementing ANY integration with external services:
+
+1. **MUST search for existing working implementations first**
+2. Study: endpoint paths, headers, payload format, response handling
+3. Copy the pattern exactly - don't assume conventions
+
+
+Never assume API conventions. Always verify the contract from the source.
+Whether that source is:
+- Existing client code (quickest)
+- API source code (authoritative)
+- API documentation
+- Type definitions

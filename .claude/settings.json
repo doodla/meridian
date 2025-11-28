@@ -5,7 +5,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "compact|resume",
+        "matcher": "compact",
         "hooks": [
           {
             "type": "command",
@@ -19,6 +19,10 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/claude-init.py"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/startup-prune-completed-tasks.py"
           }
         ]
       }
@@ -51,6 +55,17 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-guard.py"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/permission-auto-approver.py"
           }
         ]
       }
