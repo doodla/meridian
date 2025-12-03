@@ -73,15 +73,12 @@ def get_total_tokens(transcript_path: str, base_dir: Path, threshold: int) -> in
         request_id = entry.get("requestId", "unknown")
         usage = entry.get("message", {}).get("usage", {})
 
+        # Sum token fields (cache_creation.ephemeral_* duplicates cache_creation_input_tokens)
         total = 0
         total += usage.get("input_tokens", 0)
         total += usage.get("cache_creation_input_tokens", 0)
         total += usage.get("cache_read_input_tokens", 0)
         total += usage.get("output_tokens", 0)
-
-        cache_creation = usage.get("cache_creation", {})
-        total += cache_creation.get("ephemeral_5m_input_tokens", 0)
-        total += cache_creation.get("ephemeral_1h_input_tokens", 0)
 
         triggered = total >= threshold
         log_calculation(base_dir, request_id, usage, total, threshold, triggered)
